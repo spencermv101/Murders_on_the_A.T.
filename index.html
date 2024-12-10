@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset=utf-8 />
+	<title>Map Template Browser Title</title>
+	<meta name='viewport' content='initial-scale=1, maximum-scale=3, user-scalable=yes' />
+
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.css" />
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.1/dist/leaflet.css" />
+	<link href="https://fonts.googleapis.com/css?family=Noto+Sans" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css?family=Lora" rel="stylesheet">
+		
+
+	</head>
+
+	<style>
+		html, body, #map {
+    width: 100%; 
+    height: 100%; 
+    margin: 0;
+    background: #fff;
+}
+
+h1 {
+    position: absolute;
+    margin-top: 0;
+    top: 20px;
+    left: 45px;
+    font-size: 1.5em;
+    background: rgba(256, 256, 256);
+    border: 10px solid green;
+    border-radius: 3px;
+    z-index: 800;
+}
+
+section {
+    position: absolute;
+    bottom: 0;
+    left: 10px;
+    width: 280px;
+    margin: 20px auto;
+    padding: 0 15px;
+    background: rgba(256, 256, 256);
+    border: 1px solid grey;
+    border-radius: 3px;
+    z-index: 800;
+    font-size: 0.9em;
+}
+
+		p {
+			font-size: .9em;
+			line-height: 1.5em;
+		}
+
+	</style>
+</head>
+
+<body>
+
+	<h1>Appalachian Trail Murders 1974-2021.</h1>
+
+	<div id='map'></div>
+
+	<section>
+		<h2>Murders on the A.T.</h2>
+
+		<p>The interactive map I created focuses on the Appalachian Trail, a historic 2,190-mile pathway spanning 14 states in the eastern United States and attracting over 3 to 4 million visitors annually. While the trail is known for its natural beauty and rich history, it has also been the setting for tragic events, including murders.
+
+			This map serves to document and honor the victims of these crimes. Each pinpoint marks the exact location where an individual was either found or tragically murdered along the trail. Clicking on a marker opens a detailed panel that provides a remembrance of the victim and outlines the circumstances of the crime.</p>
+
+
+		<p>Link to A.T. Safety Tips <a href="https://appalachiantrail.org/explore/plan-and-prepare/hiking-basics/safety/safety-and-crime-prevention/">Appalachian Trail Conservancy</a></p>
+		<p>Created by: Madelynn Spencer</p>
+
+	</section>
+
+	<script src="http://code.jquery.com/jquery-3.1.1.min.js"></script>
+	<script src="https://unpkg.com/leaflet@1.0.1/dist/leaflet.js"></script>
+
+<script src="data/route.js"></script>
+<script src="data/route2.js"></script>
+
+
+	<script>
+
+
+console.log(data);
+
+
+
+var map = L.map('map').setView([38.0, -82.0], 7);
+
+var Esri_WorldTopoMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+	attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community'
+}).addTo(map);
+
+
+
+
+
+var route1 = L.geoJson(data).addTo(map);
+var route2 = L.geoJson(route2data).addTo(map);
+map.fitBounds(route1.getBounds());
+
+
+
+
+function zoomToFeature(e) {
+map.fitBounds(e.target.getBounds());
+}
+
+
+function highlightFeature(e) {
+    var layer = e.target;
+    layer.setStyle({
+    });
+}
+
+function resetHighlight(e) {
+    geojson.resetStyle(e.target);
+}
+
+
+
+
+function onEachFeature(feature, layer) {
+    if (feature.properties) {
+		let popupContent = `
+    <div id="popup-${layer._leaflet_id}">
+        <div id="textContent">
+            <strong>Name:</strong> ${feature.properties.name || "Unknown"}<br>
+            <strong>Description:</strong> ${feature.properties.description || "No description available"}<br>
+            <strong>Year:</strong> ${feature.properties.time || "N/A"} <br>
+            <strong>Place:</strong> ${feature.properties.place || "Uncategorized"}<br>
+            <button onclick="showImage('${layer._leaflet_id}')">Victim Image</button>
+        </div>
+        <div style="display:none;" id="hiddenContent-${layer._leaflet_id}">
+            <img src="${feature.properties.image}" alt="${feature.properties.name || "image"}" style="width:100%;max-width:100px;"/><br>
+            <button onclick="showText('${layer._leaflet_id}')">Back to Info</button>
+        </div>
+    </div>
+`;
+
+
+
+
+
+
+		let imageContent = `
+            <div id="imageContent">
+                <img src="${feature.properties.image}" alt="${feature.properties.name || "image"}" style="width:6%;max-width:6px;"/><br>
+                <button onclick="showText('${layer._leaflet_id}')">Back to Info</button>
+            </div>
+        `;
+
+
+        layer.bindPopup(popupContent);
+    }
+
+    layer.on({
+        mouseover: highlightFeature,
+        mouseout: resetHighlight,
+        click: zoomToFeature
+    });
+}
+
+
+
+function showImage(layerId) {
+    // Get the parent popup for this layer
+    let popup = document.getElementById(`popup-${layerId}`);
+    if (popup) {
+        // Hide the text content and show the image content
+        popup.querySelector("#textContent").style.display = "none";
+        popup.querySelector(`#hiddenContent-${layerId}`).style.display = "block";
+    }
+}
+
+function showText(layerId) {
+    // Get the parent popup for this layer
+    let popup = document.getElementById(`popup-${layerId}`);
+    if (popup) {
+        // Show the text content and hide the image content
+        popup.querySelector("#textContent").style.display = "block";
+        popup.querySelector(`#hiddenContent-${layerId}`).style.display = "none";
+    }
+}
+
+// Add the route data from route.js to the map
+var geojson = L.geoJson(data, {
+    onEachFeature: onEachFeature
+}).addTo(map);
+
+
+map.attributionControl.addAttribution('Greenbelly &copy; <a href="https://www.greenbelly.co/pages/appalachian-trail-murders#:~:text=1974%3A%20Joel%20Polson&text=This%20is%20the%20first%20recorded,was%20also%20spending%20the%20night"</a> | This map is made by Madelynn Spencer');
+    
+	</script>
+
+</body>
+
+</html>
